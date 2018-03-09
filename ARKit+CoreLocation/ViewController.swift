@@ -71,7 +71,8 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         }
         
         //Added updated location 49.2489415,-122.9899965
-        let pinCoordinate = CLLocationCoordinate2D(latitude: 49.2489415, longitude: -122.9899965)
+        // ,,15.61
+        let pinCoordinate = CLLocationCoordinate2D(latitude: 49.2545494, longitude: -123.1587709)
         let pinLocation = CLLocation(coordinate: pinCoordinate, altitude: 236)
         let pinImage = UIImage(named: "pin")!
         let pinLocationNode = LocationAnnotationNode(location: pinLocation, image: pinImage)
@@ -90,6 +91,9 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
             mapView.showsPointsOfInterest = true
             locationManager.requestAlwaysAuthorization()
             locationManager.requestWhenInUseAuthorization()
+            
+            //mapView.setUserTrackingMode(MKUserTrackingMode.followWithHeading, animated: true)
+            
             view.addSubview(mapView)
             self.setUpGeofenceForPlayaGrandeBeach()
             
@@ -98,6 +102,10 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                 locationManager.delegate = self
                 locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 locationManager.startUpdatingLocation()
+                locationManager.startUpdatingHeading()
+                print("lcoaitonManager" + locationManager.location.debugDescription)
+            } else {
+                print("not enabled")
             }
             
             let sourceCoordinates = locationManager.location?.coordinate
@@ -275,6 +283,12 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         DDLogDebug("pause")
         // Pause the view's session
         sceneLocationView.pause()
+    }
+    
+    //Added Camrea will now point in directions of user
+    func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+        mapView.camera.heading = newHeading.magneticHeading
+        mapView.setCamera(mapView.camera, animated: true)
     }
     
     override func viewDidLayoutSubviews() {
