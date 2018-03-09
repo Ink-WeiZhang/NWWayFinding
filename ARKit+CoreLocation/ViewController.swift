@@ -14,16 +14,14 @@ import CocoaLumberjack
 @available(iOS 11.0, *)
 class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDelegate, SceneLocationViewDelegate {
     let sceneLocationView = SceneLocationView()
-    
     let mapView = MKMapView()
     
     var userAnnotation: MKPointAnnotation?
     var locationEstimateAnnotation: MKPointAnnotation?
     // Added
     let locationManager = CLLocationManager()
-    
+
     var updateUserLocationTimer: Timer?
-    
     ///Whether to show a map view
     ///The initial value is respected
     var showMapView: Bool = true
@@ -79,8 +77,13 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         sceneLocationView.addLocationNodeWithConfirmedLocation(locationNode: pinLocationNode)
         
         view.addSubview(sceneLocationView)
-        
-    
+
+        let box = SCNBox(width: 0.2, height: 0.2, length: 0.2, chamferRadius: 0)
+        let boxNode = SCNNode(geometry: box)
+        let testStart = CLLocationCoordinate2D(latitude: 49.257280, longitude: -123.153606)
+        let testEnd = CLLocationCoordinate2D(latitude: 49.257315, longitude: -123.154952)
+        let locationNode = pathNode(start: testStart, end: testEnd)
+        boxNode.position = SCNVector3(0,0,-0.5)
         
         if showMapView {
             mapView.delegate = self
@@ -93,7 +96,6 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
             locationManager.requestWhenInUseAuthorization()
             
             view.addSubview(mapView)
-            self.setUpGeofenceForPlayaGrandeBeach()
             
             //Added
             if CLLocationManager.locationServicesEnabled() {
@@ -128,17 +130,16 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                 } else {
                     let route = response?.routes[0]
                     self.mapView.add((route?.polyline)!, level: .aboveRoads)
-                    
+                    print("route poly line coord" + String(describing: route?.polyline.coordinate.latitude))
                     let rekt = route?.polyline.boundingMapRect
                     self.mapView.setRegion(MKCoordinateRegionForMapRect(rekt!), animated: true)
                     
-                    //Added
-                    var isFirst = true
                     
                     for route in response!.routes {
                     
+                        print("route steps count: " + String(route.steps.count))
+                        print("route steps description: " + String(route.steps.debugDescription))
                         
-                        print(route.steps.count)
                         
                         for step in route.steps {
                             
@@ -147,8 +148,8 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                             
                             step.polyline.getCoordinates(array, range: NSMakeRange(0, pointCount))
                             
-                            debugPrint(step.instructions)
-                            debugPrint(step.polyline.coordinate)
+                            debugPrint("step instruction " + step.instructions)
+                            debugPrint("step instruction polyLine " + String(describing: step.polyline.coordinate))
                             for i in 0..<pointCount {
                                 
                                 let coord = array[i]
@@ -161,58 +162,21 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                                 print("step coordinate[\(i)] = \(coord.latitude),\(coord.longitude)")
                             }
                             
-                            //Adding first GEOFENCE
-                            isFirst = false
-                            if  isFirst && CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) {
-                                
-                                // 2. region data
-                                let title = "Lorrenzillo's"
-                                let coordinate = CLLocationCoordinate2DMake(array[0].latitude, array[0].longitude)
-                                print("Lorenzillos lat " + String(coordinate.latitude))
-                                print("Lorenzillos lon " + String(coordinate.longitude))
-                                let regionRadius = 200.0
-                                
-                                // 3. setup region
-                                let region = CLCircularRegion(center: CLLocationCoordinate2D(latitude: coordinate.latitude,
-                                                                                             longitude: coordinate.longitude), radius: regionRadius, identifier: title)
-                                region.notifyOnExit = true;
-                                region.notifyOnEntry = true
-                                self.locationManager.startMonitoring(for: region)
-                                
-                                // 4. setup annotation
-                                let restaurantAnnotation = MKPointAnnotation()
-                                restaurantAnnotation.coordinate = coordinate;
-                                restaurantAnnotation.title = "\(title)";
-                                self.mapView.addAnnotation(restaurantAnnotation)
-                                //
-                            }
-                            else {
-                                print("System can't track regions")
-                            }
                             array.deallocate(capacity: pointCount)
                         }
                     }
                 }
             })
             
-//            updateUserLocationTimer = Timer.scheduledTimer(
-//                timeInterval: 0.5,
-//                target: self,
-//                selector: #selector(ViewController.updateUserLocation),
-//                userInfo: nil,
-//                repeats: true)
+            updateUserLocationTimer = Timer.scheduledTimer(
+                timeInterval: 0.5,
+                target: self,
+                selector: #selector(ViewController.updateUserLocation),
+                userInfo: nil,
+                repeats: true)
         }
     }
     
-
-    func setUpGeofenceForPlayaGrandeBeach() {
-
-        let geofenceRegionCenter = CLLocationCoordinate2DMake(49.257307,-123.152949);
-        let geofenceRegion = CLCircularRegion(center: geofenceRegionCenter, radius: 100.0, identifier: "The Restaurant");
-        geofenceRegion.notifyOnExit = true;
-        geofenceRegion.notifyOnEntry = true;
-        self.locationManager.startMonitoring(for: geofenceRegion)
-    }
 
     func addAnnotationAndLabelToCoordinate(withCoordinate coordinate: CLLocationCoordinate2D, text: String) {
         
@@ -248,21 +212,6 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         annotationNode.scaleRelativeToDistance = true
         
         sceneLocationView.addLocationNodeWithConfirmedLocation(locationNode: annotationNode)
-    }
-    
-    
-    //Added: for geofencing
-    // 1. user enter region
-    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        if region is CLCircularRegion {
-            print("hello")
-        }
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        if region is CLCircularRegion {
-            print("goodbye")
-        }
     }
 
     

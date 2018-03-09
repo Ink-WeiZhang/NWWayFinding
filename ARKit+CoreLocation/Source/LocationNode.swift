@@ -91,3 +91,23 @@ open class LocationAnnotationNode: LocationNode {
         fatalError("init(coder:) has not been implemented")
     }
 }
+
+open class pathNode: LocationNode {
+    public let startingPoint: CLLocationCoordinate2D
+    public let endPoint: CLLocationCoordinate2D
+    public let startNode: CLLocation
+
+    public init(start: CLLocationCoordinate2D, end: CLLocationCoordinate2D) {
+        self.startingPoint = start
+        self.endPoint = end
+        self.startNode = CLLocation(coordinate: self.startingPoint, altitude: 10.0)
+        let distance
+        
+        
+        super.init(location: startNode)
+    }
+    
+    required public init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+}
