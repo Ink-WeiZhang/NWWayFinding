@@ -92,8 +92,6 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
             locationManager.requestAlwaysAuthorization()
             locationManager.requestWhenInUseAuthorization()
             
-            //mapView.setUserTrackingMode(MKUserTrackingMode.followWithHeading, animated: true)
-            
             view.addSubview(mapView)
             self.setUpGeofenceForPlayaGrandeBeach()
             
@@ -102,7 +100,7 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                 locationManager.delegate = self
                 locationManager.desiredAccuracy = kCLLocationAccuracyBest
                 locationManager.startUpdatingLocation()
-                locationManager.startUpdatingHeading()
+//                locationManager.startUpdatingHeading()
                 print("lcoaitonManager" + locationManager.location.debugDescription)
             } else {
                 print("not enabled")
@@ -134,6 +132,9 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                     let rekt = route?.polyline.boundingMapRect
                     self.mapView.setRegion(MKCoordinateRegionForMapRect(rekt!), animated: true)
                     
+                    //Added
+                    var isFirst = true
+                    
                     for route in response!.routes {
                     
                         
@@ -161,18 +162,21 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                             }
                             
                             //Adding first GEOFENCE
-                            if  CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) {
+                            isFirst = false
+                            if  isFirst && CLLocationManager.isMonitoringAvailable(for: CLCircularRegion.self) {
                                 
                                 // 2. region data
                                 let title = "Lorrenzillo's"
                                 let coordinate = CLLocationCoordinate2DMake(array[0].latitude, array[0].longitude)
                                 print("Lorenzillos lat " + String(coordinate.latitude))
                                 print("Lorenzillos lon " + String(coordinate.longitude))
-                                let regionRadius = 300.0
+                                let regionRadius = 200.0
                                 
                                 // 3. setup region
                                 let region = CLCircularRegion(center: CLLocationCoordinate2D(latitude: coordinate.latitude,
                                                                                              longitude: coordinate.longitude), radius: regionRadius, identifier: title)
+                                region.notifyOnExit = true;
+                                region.notifyOnEntry = true
                                 self.locationManager.startMonitoring(for: region)
                                 
                                 // 4. setup annotation
@@ -191,24 +195,25 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
                 }
             })
             
-            updateUserLocationTimer = Timer.scheduledTimer(
-                timeInterval: 0.5,
-                target: self,
-                selector: #selector(ViewController.updateUserLocation),
-                userInfo: nil,
-                repeats: true)
+//            updateUserLocationTimer = Timer.scheduledTimer(
+//                timeInterval: 0.5,
+//                target: self,
+//                selector: #selector(ViewController.updateUserLocation),
+//                userInfo: nil,
+//                repeats: true)
         }
     }
     
+
     func setUpGeofenceForPlayaGrandeBeach() {
-        
-        let geofenceRegionCenter = CLLocationCoordinate2DMake(49.250608364545634, -123.00182073954318);
-        let geofenceRegion = CLCircularRegion(center: geofenceRegionCenter, radius: 400, identifier: "The Restaurant");
+
+        let geofenceRegionCenter = CLLocationCoordinate2DMake(49.257307,-123.152949);
+        let geofenceRegion = CLCircularRegion(center: geofenceRegionCenter, radius: 100.0, identifier: "The Restaurant");
         geofenceRegion.notifyOnExit = true;
         geofenceRegion.notifyOnEntry = true;
         self.locationManager.startMonitoring(for: geofenceRegion)
     }
-    
+
     func addAnnotationAndLabelToCoordinate(withCoordinate coordinate: CLLocationCoordinate2D, text: String) {
         
         let location = CLLocation(coordinate: coordinate, altitude: 0)
@@ -249,15 +254,24 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
     //Added: for geofencing
     // 1. user enter region
     func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
-        print("enter")
-        self.mapView.mapType = .hybrid
+        if region is CLCircularRegion {
+            print("hello")
+        }
     }
     
-    // 2. user exit region
     func locationManager(_ manager: CLLocationManager, didExitRegion region: CLRegion) {
-        print("exit")
+        if region is CLCircularRegion {
+            print("goodbye")
+        }
+    }
 
-        self.mapView.mapType = .hybrid
+    
+    func locationManager(_ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error) {
+        print("Monitoring failed for region with identifier: \(region!.identifier)")
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location Manager failed with the following error: \(error)")
     }
     
     
