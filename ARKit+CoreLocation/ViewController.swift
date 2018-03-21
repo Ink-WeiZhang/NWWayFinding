@@ -39,8 +39,9 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
     
     var updateInfoLabelTimer: Timer?
     
-    
     var adjustNorthByTappingSidesOfScreen = false
+    
+    private(set) var locationNodes = [LocationNode]()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -334,6 +335,7 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         // Release any cached data, images, etc that aren't in use.
     }
     
+    
     @objc func updateUserLocation() {
         if let currentLocation = sceneLocationView.currentLocation() {
             DispatchQueue.main.async {
@@ -411,6 +413,8 @@ class ViewController: UIViewController, MKMapViewDelegate, CLLocationManagerDele
         if let hour = comp.hour, let minute = comp.minute, let second = comp.second, let nanosecond = comp.nanosecond {
             infoLabel.text!.append("\(String(format: "%02d", hour)):\(String(format: "%02d", minute)):\(String(format: "%02d", second)):\(String(format: "%03d", nanosecond / 1000000))")
         }
+        sceneLocationView.checkLocVsNode()
+        
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {

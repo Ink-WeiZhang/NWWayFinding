@@ -296,6 +296,7 @@ public class SceneLocationView: ARSCNView, ARSCNViewDelegate {
         locationNode.removeFromParentNode()
     }
     
+    
     private func confirmLocationOfDistantLocationNodes() {
         guard let currentPosition = currentScenePosition() else {
             return
@@ -501,5 +502,26 @@ extension SceneLocationView: LocationManagerDelegate {
     
     func locationManagerDidUpdateHeading(_ locationManager: LocationManager, heading: CLLocationDirection, accuracy: CLLocationAccuracy) {
         
+    }
+}
+
+@available(iOS 11.0, *)
+extension SceneLocationView{
+    func checkLocVsNode(){
+        if (compareTwoPos(a: currentLocation()!, b: locationNodes[0].location)){
+            removeLocationNode(locationNode: locationNodes[0])
+            print("Reached check success")
+        }
+        print ("Reached check but locations were too far")
+    }
+    
+    func compareTwoPos(a: CLLocation, b: CLLocation)->Bool {
+        if (a.coordinate.latitude - b.coordinate.latitude > 0.000000000005){
+            return false;
+        }
+        if (a.coordinate.longitude - b.coordinate.longitude > 0.000000000005) {
+            return false;
+        }
+        return true;
     }
 }
